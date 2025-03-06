@@ -11,7 +11,7 @@ class FSM_ST(StatesGroup):
     swnd_msg = State()
 
 
-bot_tocken = 'Bot_Token'
+bot_tocken = '7961544857:AAGoiBeimCnjEL2fbixAxRHUipBKVFHi2bg'
 
 bot = Bot(token=bot_tocken,
               default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -22,3 +22,30 @@ bot_storage_key = StorageKey(bot_id=bot.id, user_id=bot.id, chat_id=bot.id)
 dp = Dispatcher(storage=aio_storage)
 
 
+
+@api.post("/update_order")
+async def update_order(request: Request):
+    print('We are into update order')
+    data = await request.json()
+    user_id = data.get("user_id")
+    address = data.get("address")
+    phone = data.get("phone")
+    payment = data.get("payment")
+
+    if not user_id:
+        return {"success": False, "error": "user_id не найден"}
+
+    # Загружаем данные бота
+    bot_dict = await dp.storage.get_data(key=bot_storage_key)
+
+    if user_id not in bot_dict:
+        bot_dict[user_id] = {"name": "Unknown", "order": {}}
+
+    # Обновляем заказ
+    bot_dict[user_id]["order"] = {"address": address, "phone": phone, "payment": payment}
+    print('bot_dict = ', bot_dict)
+
+    # Сохраняем обновлённые данные
+    await dp.storage.update_data(key=bot_storage_key, data=bot_dict)
+
+    return {"success": True}
