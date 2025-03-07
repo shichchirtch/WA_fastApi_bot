@@ -1,17 +1,14 @@
-from fastapi import FastAPI, HTTPException, Request, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from external_functions import send_telegram_message
 from bot_instance import dp, bot_storage_key
 import datetime
 import pytz
-from python_db import users_db
 from fastapi.staticfiles import StaticFiles
 
 
 f_api = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
 f_api.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -74,10 +71,6 @@ async def cart_page(data: dict):
     formatted_time = a.strftime("%H:%M %d.%m.%Y") # выставляю время
     order_user += f' Total {total_price} Data : {formatted_time}'
 
-    us_dict = users_db[user_id]['orders']
-    us_index = len(us_dict) + 1
-    us_dict[us_index] = f"{user_name}, {phone}, Total {total_price} €"
-
     bot_dict = await dp.storage.get_data(key=bot_storage_key)
     us_dict = bot_dict.get(user_id, {})
     us_index = len(us_dict['order']) + 1
@@ -92,7 +85,8 @@ async def cart_page(data: dict):
 @f_api.get("/cart")
 async def get_cart(request: Request):
     total_price = sum(item['price'] for item in server_cart)
-    return templates.TemplateResponse("cart.html", {"request": request, "cart": server_cart, "total_price": total_price})
+    return templates.TemplateResponse("cart.html",
+    {"request": request, "cart": server_cart, "total_price": total_price})
 
 
 @f_api.post("/add-to-cart")
